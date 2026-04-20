@@ -20,6 +20,7 @@ class AppState {
     selectedDocIds = $state([])
     
     // UI State
+    viewMode = $state('table') // 'table' or 'tree'
     hasMore = $state(false)
     isLoading = $state(false)
     error = $state(null)
