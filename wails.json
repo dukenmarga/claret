@@ -1,0 +1,24 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "claret",
+  "outputfilename": "claret",
+  "frontend:install": "npm install --legacy-peer-deps",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "Duken Marga",
+    "email": "dukenmarga@gmail.com"
+  },
+  "info": {
+    "productName": "Claret",
+    "productVersion": "0.1.0",
+    "copyright": "Copyright 2026",
+    "comments": "Firebase Management Tool"
+  },
+  "width": 1280,
+  "height": 800,
+  "minWidth": 1024,
+  "minHeight": 768,
+  "backgroundColour": "#020617"
+}

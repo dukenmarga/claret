@@ -1,0 +1,12 @@
+export function SelectServiceAccountFile():Promise<string>;
+export function ParseServiceAccount(arg1:string):Promise<any>;
+export function GetConfig():Promise<any>;
+export function AddProject(arg1:any):Promise<any>;
+export function RemoveProject(arg1:string):Promise<any>;
+export function ConnectProject(arg1:string,arg2:string):Promise<any>;
+export function GetCollections(arg1:string):Promise<any>;
+export function GetDocuments(arg1:string,arg2:any):Promise<any>;
+export function UpdateDocument(arg1:string,arg2:any):Promise<any>;
+export function DeleteDocuments(arg1:Array<string>):Promise<any>;
+export function GetUsers(arg1:number):Promise<any>;
+export function DeleteUser(arg1:string):Promise<any>;
