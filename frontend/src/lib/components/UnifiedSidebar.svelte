@@ -1,8 +1,8 @@
 <script>
     import { appState } from '../state.svelte.js'
-    import { ChevronRight, ChevronDown, Database, Users, Plus, RefreshCw, Folder, Settings, ShieldCheck } from 'lucide-svelte'
+    import { ChevronRight, ChevronDown, Database, Users, Plus, RefreshCw, Folder, Settings, ShieldCheck, X } from 'lucide-svelte'
 
-    let { onAddProject } = $props()
+    let { onAddProject, activeTab = $bindable() } = $props()
 
     let groupedProjects = $derived.by(() => {
         const groups = {}
@@ -39,7 +39,6 @@
     <div class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
         {#each groupedProjects as group}
             <div class="flex flex-col">
-                <!-- Project Node -->
                 <div 
                     class="group flex items-center gap-2 px-2.5 py-2 rounded-xl transition-all cursor-pointer {appState.currentProject?.firebaseProjectId === group.id ? 'bg-white/5 ring-1 ring-white/10' : 'hover:bg-white/5'}"
                     onclick={() => appState.toggleProjectExpansion(group.id)}
@@ -56,16 +55,27 @@
                 {#if appState.expandedProjectIds.includes(group.id)}
                     <div class="ml-4 pl-4 border-l-2 border-slate-800/50 mt-1 space-y-1 animate-in fade-in slide-in-from-left-2 duration-200">
                         {#each group.databases as db}
-                            <div class="flex flex-col">
-                                <button 
-                                    onclick={() => { appState.selectProject(db.id, db.databaseId); appState.activeTab = 'firestore' }}
-                                    class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[11px] transition-all {appState.currentProjectId === db.id && appState.activeTab === 'firestore' ? 'text-white bg-indigo-500/30 font-black shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}"
-                                >
-                                    <Database size={14} class={appState.currentProjectId === db.id && appState.activeTab === 'firestore' ? 'text-white' : 'text-slate-500'} />
-                                    <span>Firestore <span class="{appState.currentProjectId === db.id && appState.activeTab === 'firestore' ? 'text-white/60' : 'text-slate-600'} font-mono text-[10px] ml-1">[{db.databaseId || 'default'}]</span></span>
-                                </button>
+                            {@const isDbActive = appState.currentProjectId === db.id && appState.activeTab === 'firestore'}
+                            <div class="flex flex-col group/db">
+                                <div class="flex items-center gap-1 pr-2 rounded-lg transition-all {isDbActive ? 'bg-indigo-500/30 shadow-lg' : 'hover:bg-white/5'}">
+                                    <button 
+                                        onclick={() => { appState.selectProject(db.id, db.databaseId); appState.activeTab = 'firestore' }}
+                                        class="flex-1 flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs transition-all {isDbActive ? 'text-white font-black' : 'text-slate-400 hover:text-white'}"
+                                    >
+                                        <Database size={14} class={isDbActive ? 'text-white' : 'text-slate-500'} />
+                                        <span class="truncate text-left">Firestore <span class="{isDbActive ? 'text-white/60' : 'text-slate-600'} font-mono text-[10px] ml-1">[{db.databaseId || 'default'}]</span></span>
+                                    </button>
+                                    
+                                    <button 
+                                        onclick={(e) => { e.stopPropagation(); if(confirm('Detach this database?')) appState.removeProject(db.id) }}
+                                        class="opacity-0 group-hover/db:opacity-100 p-1 text-slate-600 hover:text-red-400 transition-all"
+                                        title="Detach Database"
+                                    >
+                                        <X size={12} />
+                                    </button>
+                                </div>
 
-                                {#if appState.currentProjectId === db.id && appState.activeTab === 'firestore'}
+                                {#if isDbActive}
                                     <div class="ml-4 pl-3 border-l-2 border-indigo-500/30 mt-1 space-y-0.5 mb-2">
                                         {#each appState.collections as coll}
                                             <button 
@@ -76,6 +86,9 @@
                                                 <span class="truncate text-xs">{coll}</span>
                                             </button>
                                         {/each}
+                                        {#if appState.collections.length === 0 && !appState.isLoading}
+                                            <span class="text-[10px] text-slate-600 italic px-2 font-mono">No collections</span>
+                                        {/if}
                                     </div>
                                 {/if}
                             </div>
@@ -83,7 +96,7 @@
 
                         <button 
                             onclick={() => { appState.selectProject(group.databases[0].id, group.databases[0].databaseId); appState.activeTab = 'auth' }}
-                            class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[11px] transition-all {appState.currentProject?.firebaseProjectId === group.id && appState.activeTab === 'auth' ? 'text-white bg-indigo-500/30 font-black shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}"
+                            class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs transition-all {appState.currentProject?.firebaseProjectId === group.id && appState.activeTab === 'auth' ? 'text-white bg-indigo-500/30 font-black shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}"
                         >
                             <ShieldCheck size={14} class={appState.currentProject?.firebaseProjectId === group.id && appState.activeTab === 'auth' ? 'text-white' : 'text-slate-500'} />
                             <span>Authentication</span>
@@ -98,7 +111,7 @@
         <button class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
             <Settings size={18} />
         </button>
-        <span class="text-[8px] font-mono tracking-tighter text-white opacity-20 uppercase">Claret v1.4.0</span>
+        <span class="text-[8px] font-mono tracking-tighter text-white opacity-20 uppercase">Claret v1.4.2</span>
     </div>
 </div>
 

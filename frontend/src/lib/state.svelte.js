@@ -285,6 +285,22 @@ class AppState {
         finally { this.isLoading = false }
     }
 
+    async removeProject(id) {
+        const { RemoveProject } = await import('../../wailsjs/go/main/App')
+        try {
+            const resp = await RemoveProject(id)
+            if (resp.success) {
+                this.projects = resp.data || []
+                if (this.currentProjectId === id) {
+                    this.currentProjectId = null
+                    this.selectedPath = ''
+                    this.documents = []
+                }
+                toast.success('Database detached')
+            } else toast.error(resp.error)
+        } catch (e) { toast.error(e.toString()) }
+    }
+
     addQueryFilter() { this.activeQueries.push({ field: 'id', operator: '==', value: '' }) }
     removeQueryFilter(i) { this.activeQueries = this.activeQueries.filter((_, idx) => idx !== i) }
     async setSort(field) {
