@@ -11,7 +11,6 @@
   import UnifiedSidebar from './lib/components/UnifiedSidebar.svelte'
   import { Toaster, toast } from 'svelte-sonner'
   
-  let activeTab = $state('firestore') 
   let showAddProject = $state(false)
   let editedJson = $state('')
 
@@ -39,7 +38,7 @@
   
   <!-- Combined Unified Sidebar -->
   <aside class="w-72 border-r border-slate-800 flex flex-col bg-slate-900/30 shrink-0">
-    <UnifiedSidebar bind:activeTab={activeTab} onAddProject={() => showAddProject = true} />
+    <UnifiedSidebar onAddProject={() => showAddProject = true} />
   </aside>
 
   <!-- Main Content Area -->
@@ -52,12 +51,12 @@
         {#if appState.selectedPath}<ChevronRight size={14} class="text-slate-700" /><span class="text-indigo-400 truncate">{appState.selectedPath}</span>{/if}
       </div>
       <div class="flex items-center gap-3">
-        {#if activeTab === 'firestore'}<button onclick={() => appState.addDocument(appState.selectedPath)} disabled={!appState.selectedPath} class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-2 transition-all active:scale-95"><Plus size={14} /> Add Document</button>{/if}
+        {#if appState.activeTab === 'firestore'}<button onclick={() => appState.addDocument(appState.selectedPath)} disabled={!appState.selectedPath} class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-2 transition-all active:scale-95"><Plus size={14} /> Add Document</button>{/if}
       </div>
     </header>
 
     <div class="flex-1 overflow-hidden relative p-4">
-      {#if activeTab === 'firestore'}
+      {#if appState.activeTab === 'firestore'}
         {#if appState.selectedPath}
             {#if appState.viewMode === 'table'}
                 <DataTable path={appState.selectedPath} />
@@ -75,7 +74,7 @@
   </main>
 
   <!-- Inspector Side Panel -->
-  {#if activeTab === 'firestore'}
+  {#if appState.activeTab === 'firestore'}
   <aside class="w-[600px] border-l border-slate-800 bg-slate-900/50 flex flex-col shrink-0">
     <div class="p-4 border-b border-slate-800 flex items-center justify-between h-14 bg-slate-900/50">
       <h2 class="font-semibold text-sm uppercase tracking-wider text-slate-400">Inspector</h2>

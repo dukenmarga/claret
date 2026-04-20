@@ -4,37 +4,32 @@ import { toast } from 'svelte-sonner'
 class AppState {
     projects = $state([])
     currentProjectId = $state(null)
+    activeTab = $state('firestore') 
     
-    // Explorer State
     collections = $state([])
     docSubCollections = $state({})
     expandedDocs = $state([])
     expandedCollections = $state([])
     collectionDocuments = $state({})
 
-    // Sidebar State
     expandedProjectIds = $state([])
     
-    // Data State
     selectedPath = $state('')
     documents = $state([])
     selectedDoc = $state(null)
     selectedDocIds = $state([])
     
-    // UI State
     viewMode = $state('table') 
     hasMore = $state(false)
     isLoading = $state(false)
     error = $state(null)
     
-    // Query State
     filterField = $state('id')
     filterValue = $state('')
     activeQueries = $state([])
     orderByField = $state('')
     orderDescending = $state(false)
 
-    // Modals
     confirmDeletionList = $state([])
     showDeleteDialog = $state(false)
 
@@ -67,7 +62,7 @@ class AppState {
         return Array.from(fields).sort()
     }
 
-    refreshConfig = async () => {
+    async refreshConfig() {
         try {
             const resp = await GetConfig()
             if (resp && resp.projects) this.projects = resp.projects
@@ -75,7 +70,7 @@ class AppState {
         } catch (e) { console.error(e) }
     }
 
-    selectProject = async (id, databaseId = '') => {
+    async selectProject(id, databaseId = '') {
         this.isLoading = true
         this.error = null
         try {
@@ -95,7 +90,7 @@ class AppState {
         finally { this.isLoading = false }
     }
 
-    refreshCollections = async (parentPath) => {
+    async refreshCollections(parentPath) {
         this.isLoading = true
         try {
             const resp = await GetCollections(parentPath)
@@ -107,7 +102,7 @@ class AppState {
         finally { this.isLoading = false }
     }
 
-    selectCollection = async (path) => {
+    async selectCollection(path) {
         this.selectedPath = path
         this.documents = []
         this.selectedDoc = null
@@ -122,7 +117,7 @@ class AppState {
         await this.executeQuery(false)
     }
 
-    executeQuery = async (isLoadMore = false) => {
+    async executeQuery(isLoadMore = false) {
         if (!this.selectedPath) return
         this.isLoading = true
         if (!isLoadMore) this.filterValue = '' 
@@ -151,14 +146,15 @@ class AppState {
             })
             if (resp.success) {
                 const newDocs = resp.data || []
-                this.documents = isLoadMore ? [...this.documents, ...newDocs] : newDocs
+                if (isLoadMore) this.documents = [...this.documents, ...newDocs]
+                else this.documents = newDocs
                 this.hasMore = newDocs.length === limit
             } else toast.error(resp.error)
         } catch (e) { toast.error(e.toString()) }
         finally { this.isLoading = false }
     }
 
-    toggleDocExpansion = async (docPath) => {
+    async toggleDocExpansion(docPath) {
         if (this.expandedDocs.includes(docPath)) {
             this.expandedDocs = this.expandedDocs.filter(p => p !== docPath)
         } else {
@@ -170,7 +166,7 @@ class AppState {
         }
     }
 
-    toggleCollectionExpansion = async (collPath) => {
+    async toggleCollectionExpansion(collPath) {
         if (this.expandedCollections.includes(collPath)) {
             this.expandedCollections = this.expandedCollections.filter(p => p !== collPath)
         } else {
@@ -182,7 +178,7 @@ class AppState {
         }
     }
 
-    toggleProjectExpansion = (id) => {
+    toggleProjectExpansion(id) {
         if (this.expandedProjectIds.includes(id)) {
             this.expandedProjectIds = this.expandedProjectIds.filter(p => p !== id)
         } else {
@@ -190,7 +186,7 @@ class AppState {
         }
     }
 
-    toggleSelection = (id) => {
+    toggleSelection(id) {
         if (this.selectedDocIds.includes(id)) this.selectedDocIds = this.selectedDocIds.filter(i => i !== id)
         else this.selectedDocIds = [...this.selectedDocIds, id]
     }
@@ -199,7 +195,7 @@ class AppState {
         this.selectedDocIds = select ? this.documents.map(doc => doc.id) : []
     }
 
-    requestDelete = (docs) => {
+    requestDelete(docs) {
         this.confirmDeletionList = docs
         this.showDeleteDialog = true
     }

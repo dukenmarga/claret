@@ -215,6 +215,11 @@ type AuthUser struct {
 	LastSignIn  int64  `json:"lastSignIn"`
 }
 
+func (c *Client) UpdateUser(ctx context.Context, uid string, params *auth.UserToUpdate) error {
+	_, err := c.auth.UpdateUser(ctx, uid, params)
+	return err
+}
+
 func (c *Client) GetUsers(ctx context.Context, max int) ([]AuthUser, error) {
 	users := make([]AuthUser, 0)
 	it := c.auth.Users(ctx, "")

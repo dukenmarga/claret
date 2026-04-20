@@ -52,3 +52,7 @@ export function GetUsers(arg1) {
 export function DeleteUser(arg1) {
     return window['go']['main']['App']['DeleteUser'](arg1);
 }
+
+export function UpdateUser(arg1, arg2) {
+    return window['go']['main']['App']['UpdateUser'](arg1, arg2);
+}

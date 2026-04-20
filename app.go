@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"firebase.google.com/go/v4/auth"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"google.golang.org/api/firestore/v1"
 	"google.golang.org/api/option"
@@ -206,6 +207,37 @@ func (a *App) DeleteUser(uid string) AppResponse {
 		return AppResponse{Success: false, Error: "Not connected to any project"}
 	}
 	err := a.firebaseClient.DeleteUser(a.ctx, uid)
+	if err != nil {
+		return AppResponse{Success: false, Error: err.Error()}
+	}
+	return AppResponse{Success: true}
+}
+
+type UserUpdateParams struct {
+	Email       string `json:"email,omitempty"`
+	DisplayName string `json:"displayName,omitempty"`
+	PhotoURL    string `json:"photoURL,omitempty"`
+	Disabled    bool   `json:"disabled"`
+}
+
+func (a *App) UpdateUser(uid string, params UserUpdateParams) AppResponse {
+	if a.firebaseClient == nil {
+		return AppResponse{Success: false, Error: "Not connected to any project"}
+	}
+
+	update := (&auth.UserToUpdate{})
+	if params.Email != "" {
+		update.Email(params.Email)
+	}
+	if params.DisplayName != "" {
+		update.DisplayName(params.DisplayName)
+	}
+	if params.PhotoURL != "" {
+		update.PhotoURL(params.PhotoURL)
+	}
+	update.Disabled(params.Disabled)
+
+	err := a.firebaseClient.UpdateUser(a.ctx, uid, update)
 	if err != nil {
 		return AppResponse{Success: false, Error: err.Error()}
 	}
