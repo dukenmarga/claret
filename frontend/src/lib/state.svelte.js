@@ -5,19 +5,26 @@ class AppState {
     projects = $state([])
     currentProjectId = $state(null)
     
-    collections = $state([])
-    docSubCollections = $state({})
-    expandedDocs = $state([])
+    // Explorer / Tree State
+    collections = $state([]) // Root collections
+    docSubCollections = $state({}) // docPath -> string[] (sub-collection names)
+    collectionDocuments = $state({}) // collectionPath -> Document[]
     
+    expandedDocs = $state([]) // docPath[]
+    expandedCollections = $state([]) // collectionPath[]
+    
+    // Global Selection/Path (Main focus)
     selectedPath = $state('')
-    documents = $state([])
+    documents = $state([]) // This remains the "main" view list
     selectedDoc = $state(null)
     selectedDocIds = $state([])
     
+    // UI State
     hasMore = $state(false)
     isLoading = $state(false)
     error = $state(null)
     
+    // Query State
     filterField = $state('id')
     filterValue = $state('')
     activeQueries = $state([])
@@ -33,27 +40,6 @@ class AppState {
 
     get currentProject() {
         return this.projects.find(p => p.id === this.currentProjectId)
-    }
-
-    get filteredDocuments() {
-        if (!this.filterValue) return this.documents
-        const query = this.filterValue.toLowerCase().trim()
-        return this.documents.filter(doc => {
-            if (!doc) return false
-            if (this.filterField === 'id') return doc.id.toLowerCase().includes(query)
-            const val = doc.data ? doc.data[this.filterField] : undefined
-            return String(val).toLowerCase().includes(query)
-        })
-    }
-
-    get availableFields() {
-        const fields = new Set(['id'])
-        if (Array.isArray(this.documents)) {
-            this.documents.forEach(doc => {
-                if (doc?.data) Object.keys(doc.data).forEach(key => fields.add(key))
-            })
-        }
-        return Array.from(fields).sort()
     }
 
     refreshConfig = async () => {
@@ -74,7 +60,9 @@ class AppState {
                 this.documents = []
                 this.selectedDoc = null
                 this.docSubCollections = {}
+                this.collectionDocuments = {}
                 this.expandedDocs = []
+                this.expandedCollections = []
                 await this.refreshCollections('')
             } else toast.error(resp.error)
         } catch (e) { toast.error(e.toString()) }
@@ -86,8 +74,11 @@ class AppState {
         try {
             const resp = await GetCollections(parentPath)
             if (resp.success) {
-                if (parentPath === '') this.collections = resp.data || []
-                else this.docSubCollections[parentPath] = resp.data || []
+                if (parentPath === '') {
+                    this.collections = resp.data || []
+                } else {
+                    this.docSubCollections[parentPath] = resp.data || []
+                }
             } else toast.error(resp.error)
         } catch (e) { toast.error(e.toString()) }
         finally { this.isLoading = false }
@@ -102,11 +93,13 @@ class AppState {
         this.orderByField = ''
         this.orderDescending = false
         this.docSubCollections = {}
+        this.collectionDocuments = {}
         this.expandedDocs = []
+        this.expandedCollections = []
         await this.executeQuery(false)
     }
 
-    executeQuery = async (isLoadMore = false) => {
+    async executeQuery(isLoadMore = false) {
         if (!this.selectedPath) return
         this.isLoading = true
         if (!isLoadMore) this.filterValue = '' 
@@ -150,20 +143,33 @@ class AppState {
             this.expandedDocs = [...this.expandedDocs, docPath]
             if (!this.docSubCollections[docPath]) {
                 const resp = await GetCollections(docPath)
-                if (resp.success) this.docSubCollections[docPath] = resp.data || []
+                if (resp.success) {
+                    this.docSubCollections[docPath] = resp.data || []
+                }
             }
         }
     }
 
-    toggleSelection = (id) => {
-        if (this.selectedDocIds.includes(id)) {
-            this.selectedDocIds = this.selectedDocIds.filter(i => i !== id)
+    toggleCollectionExpansion = async (collPath) => {
+        if (this.expandedCollections.includes(collPath)) {
+            this.expandedCollections = this.expandedCollections.filter(p => p !== collPath)
         } else {
-            this.selectedDocIds = [...this.selectedDocIds, id]
+            this.expandedCollections = [...this.expandedCollections, collPath]
+            if (!this.collectionDocuments[collPath]) {
+                const resp = await GetDocuments(collPath, { conditions: [], limit: 50 })
+                if (resp.success) {
+                    this.collectionDocuments[collPath] = resp.data || []
+                }
+            }
         }
     }
 
-    selectAll = (select) => {
+    toggleSelection(id) {
+        if (this.selectedDocIds.includes(id)) this.selectedDocIds = this.selectedDocIds.filter(i => i !== id)
+        else this.selectedDocIds = [...this.selectedDocIds, id]
+    }
+
+    selectAll(select) {
         this.selectedDocIds = select ? this.documents.map(doc => doc.id) : []
     }
 
@@ -172,7 +178,7 @@ class AppState {
         this.showDeleteDialog = true
     }
 
-    confirmDelete = async () => {
+    async confirmDelete() {
         const paths = this.confirmDeletionList.map(d => d.path)
         const ids = this.confirmDeletionList.map(d => d.id)
         this.isLoading = true
@@ -182,7 +188,7 @@ class AppState {
                 this.documents = this.documents.filter(doc => !ids.includes(doc.id))
                 this.selectedDocIds = this.selectedDocIds.filter(id => !ids.includes(id))
                 if (this.selectedDoc && ids.includes(this.selectedDoc.id)) this.selectedDoc = null
-                toast.success(`Deleted ${paths.length} documents`)
+                toast.success(`Deleted ${paths.length} docs`)
             } else toast.error(resp.error)
         } catch (e) { toast.error(e.toString()) }
         finally {
@@ -198,15 +204,11 @@ class AppState {
     }
 
     deleteDocument = (path) => {
-        const doc = this.documents.find(d => d.path === path)
-        if (doc) this.requestDelete([{ id: doc.id, path: doc.path }])
-        else {
-            const id = path.split('/').pop()
-            this.requestDelete([{ id, path }])
-        }
+        const doc = this.documents.find(d => d.path === path) || { id: path.split('/').pop(), path }
+        this.requestDelete([{ id: doc.id, path: doc.path }])
     }
 
-    duplicateTo = async (targetCollection, doc = null) => {
+    async duplicateTo(targetCollection, doc = null) {
         const docs = doc ? [doc] : this.documents.filter(d => this.selectedDocIds.includes(d.id))
         if (docs.length === 0) return
         let count = 0
@@ -222,7 +224,7 @@ class AppState {
         }
     }
 
-    saveDocument = async (doc) => {
+    async saveDocument(doc) {
         try {
             const resp = await UpdateDocument(doc.path, doc.data)
             if (resp.success) {
@@ -239,7 +241,7 @@ class AppState {
         this.selectedDoc = { id, path: `${collectionPath}/${id}`, data: { createdAt: new Date().toISOString() } }
     }
 
-    renameDocument = async (doc, newId) => {
+    async renameDocument(doc, newId) {
         if (!newId || newId === doc.id) return
         const oldPath = doc.path
         const newPath = `${oldPath.substring(0, oldPath.lastIndexOf('/'))}/${newId}`
@@ -259,7 +261,7 @@ class AppState {
 
     addQueryFilter = () => { this.activeQueries.push({ field: 'id', operator: '==', value: '' }) }
     removeQueryFilter = (i) => { this.activeQueries = this.activeQueries.filter((_, idx) => idx !== i) }
-    setSort = async (field) => {
+    async setSort(field) {
         if (this.orderByField === field) this.orderDescending = !this.orderDescending
         else { this.orderByField = field; this.orderDescending = false }
         await this.executeQuery()
