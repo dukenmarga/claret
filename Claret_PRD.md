@@ -1,6 +1,6 @@
 # Project Title & Overview: **Claret**
 
-**Claret** is a lightweight, high-performance open-source desktop GUI application for managing the Firebase ecosystem (Firestore, Auth, Storage). Built with **Wails v2**, **Go 1.25**, and **Svelte 5**, Claret provides a blazing-fast, high-contrast developer experience for managing both production and emulator environments.
+**Claret** is a high-performance, open-source desktop GUI application for managing the Firebase ecosystem (Firestore, Auth, Storage). Built with **Wails v2**, **Go 1.25**, and **Svelte 5**, Claret provides a blazing-fast, ultra-high-contrast developer experience for managing both production and emulator environments.
 
 **Branding & Rationale:**
 1.  **Claret**: A name representing a refined, sophisticated tool for data management.
@@ -8,31 +8,31 @@
     - **Primary Colors**: `#FFCA28` (Firebase Yellow) & `#F57C00` (Firebase Orange).
     - **Background**: Slate-950 (Dark-first design).
     - **Accent**: Indigo-500 for primary interactions, Emerald-500 for data values.
-    - **Sidebar**: Ultra-high contrast (White text on Slate) for professional IDE feel.
+    - **Sidebar**: High-contrast "Ultra" design (Brilliant White text on Deep Slate) with vertical guide lines.
 
 ---
 
 ## User Stories (Completed)
 
-### Firestore Data Exploration
-- **Given** I have a Service Account JSON file.
-- **When** I browse the file in the Add Project dialog.
-- **Then** Claret automatically detects my Project ID and lists all available Firestore Databases for selection.
+### High-Speed Project Navigation
+- **Given** I manage multiple Firebase projects and databases.
+- **When** I look at the sidebar.
+- **Then** I see a unified tree grouping Firestore instances and Auth by project, with active selections highlighted in brilliant white.
 
-### Hybrid Tree-Table Browsing
-- **Given** I am in a collection.
-- **When** I toggle between "Table" and "Tree" modes.
-- **Then** I see a synchronized view where data is represented as a professional column-based tree (Key/Value/Type) or a high-density grid.
-
-### Safe Data Deletion
-- **Given** I need to delete one or more documents.
-- **When** I trigger the delete action.
-- **Then** I must type "DELETE" in a security dialog that lists the specific Document IDs and paths being removed.
+### Real-Time Hierarchy Exploration
+- **Given** I am browsing deeply nested Firestore collections.
+- **When** I expand a document row or switch to Tree mode.
+- **Then** I see synchronized, hierarchical data (Key/Value/Type) and sub-collections directly in the middle explorer.
 
 ### Advanced Authentication Management
 - **Given** I am in the Auth Manager.
-- **When** I view the user list.
-- **Then** I can edit user metadata (Display Name, Photo URL) and toggle their account status (Enabled/Disabled) directly.
+- **When** I search for a user by Email, UID, or Phone.
+- **Then** Claret performs an optimized scan and displays users with detailed "Providers" icons and high-precision "Signed In" timestamps.
+
+### Direct User Administration
+- **Given** a user account needs a metadata update or suspension.
+- **When** I click the edit icon in the Auth table.
+- **Then** I can instantly update their Display Name, Avatar URL, or toggle their account status.
 
 ---
 
@@ -42,49 +42,44 @@
 - **Runtime**: Wails v2.
 - **Go Version**: 1.25 (using 1.23.0 compatibility mode in `go.mod`).
 - **Firebase SDK**: `firebase.google.com/go/v4`.
-- **Key Backend Logic**: Custom serialization to ensure empty lists return `[]` instead of `null` to the frontend.
+- **Search Engine**: Custom Go-based partial match scanner with safety capping (100 users) for performance.
 
 ### Frontend (Svelte 5 + Tailwind 4)
-- **Framework**: Svelte 5 (100% Runes: `$state`, `$derived`, `$effect`, `$bindable`).
-- **Styling**: Tailwind CSS v4 (Zero-config Vite plugin).
-- **JSON Editor**: `svelte-jsoneditor` (Replacing Monaco for better Wails compatibility and tree/text hybrid support).
+- **Framework**: Svelte 5 (Utilizing pure Class-based state with `$state` and reactive getters).
+- **Styling**: Tailwind CSS v4 (Zero-config).
+- **JSON Editor**: `svelte-jsoneditor` (Tree & Text modes).
 - **Notifications**: `svelte-sonner`.
-- **Icons**: Lucide Svelte.
+- **Iconography**: `lucide-svelte` + custom branding SVGs (e.g., Google G).
 
 ---
 
 ## Functional Requirements (Detailed)
 
-### 1. Project & Sidebar Management (Completed)
-- **Unified Sidebar**: Grouped hierarchy (Project > Firestore Instance > Collections).
-- **Database Discovery**: Auto-scans Service Accounts to list multiple Firestore databases.
-- **Database Detach**: Hover-action to remove a database from local config without deleting server data.
+### 1. Unified Sidebar & Project Engine (Completed)
+- **Project Grouping**: All databases and services (Auth/Firestore) are nested under a single Project root.
+- **High-Contrast Design**: Active nodes use Bold Brilliant White (`#FFFFFF`) with indigo ring highlights.
+- **Database Discovery**: Auto-scans Service Accounts for all available Firestore databases during import.
+- **Database Management**: Detach databases from the local view via hover-action.
 
-### 2. Firestore Manager (Completed)
-- **Hybrid View Modes**:
-    - **Table View**: Compact grid with inline cell editing and infinite scroll ("Load More").
-    - **Tree View**: Hierarchical columns (Key/Value/Type) with recursive expansion and inline editing.
-- **Server-Side Query Builder**: 
-    - Multi-condition support (`==`, `!=`, `>`, etc.).
-    - Native `DocumentID` support for `__key__` queries.
-    - Server-side `OrderBy` and sorting via column header clicks.
-- **Data Operations**:
-    - **Renaming**: Background Document ID rename (Clone + Delete logic).
-    - **Duplication**: Copy selected documents to any target collection path.
-    - **Bulk Actions**: Multi-select documents for mass delete or mass duplicate.
+### 2. Firestore Management (Completed)
+- **Hybrid Modes**: Toggle between high-density Table mode and hierarchical Tree mode with synchronized filters.
+- **Recursive Navigation**: Deep-drill into documents and sub-collections without changing views.
+- **Inline Editing**: Double-click support for cell value updates and Document ID renaming (Clone/Delete).
+- **Advanced Querying**: Server-side Query Builder with multi-condition logic and sort persistence.
 
 ### 3. Authentication Manager (Completed)
-- **User List**: Displays UID, Email, Status (Active/Disabled), and Metadata.
-- **User Editor**: Dedicated dialog to update profile info and account status.
-- **Security**: Full user deletion with confirmation.
+- **Unified Identifier**: Shows Phone, Email, or Anonymous status at a glance.
+- **Provider Tracking**: Displays authentication source icons (Google, Password, Phone, Anonymous).
+- **Full Metadata CRUD**: Edit Display Name, Photo URL, and Enable/Disable status.
+- **Performance**: Optimized table rendering using CSS containment and fixed layout for zero-lag hover effects.
 
 ---
 
 ## UI/UX Design Standards
-- **High Contrast**: Primary navigation uses White (`#FFFFFF`) bold text for visibility.
-- **Reactive UI**: All changes (filtering, sorting, path changes) are instantaneous with zero screen flickering.
-- **Density**: Maximum data density in tables/trees, utilizing 11px-12px font sizes and minimal padding.
-- **Safety**: Red-themed dialogs for destructive actions; blue/indigo for navigation.
+- **Ultra-Contrast**: Primary text is Brilliant White; data values use Emerald/Indigo accents.
+- **High Density**: 11px-12px font sizes with minimal padding for professional "IDE-style" data density.
+- **Safety Protocol**: Mandatory "DELETE" confirmation for destructive actions.
+- **Instant Feedback**: Toast notifications for all server-side write operations.
 
 ---
-**Claret v1.4.0** - *The professional desktop standard for Firebase data management.*
+**Claret v1.5.0-PRO** - *The professional standard for Firebase desktop administration.*
