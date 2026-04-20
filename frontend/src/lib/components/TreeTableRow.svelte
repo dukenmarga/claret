@@ -44,7 +44,8 @@
         if (!isExpanded) return []
         if (type === 'collection') {
             if (path === appState.selectedPath) {
-                return appState.documents.map(d => ({ id: d.id, path: d.path, type: 'document', data: d.data, parentDoc: d }))
+                // Synchronize with synchronized filter logic
+                return appState.filteredDocuments.map(d => ({ id: d.id, path: d.path, type: 'document', data: d.data, parentDoc: d }))
             }
             return (appState.collectionDocuments[path] || []).map(d => ({ id: d.id, path: d.path, type: 'document', data: d.data, parentDoc: d }))
         }
