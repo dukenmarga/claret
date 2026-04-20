@@ -3,10 +3,14 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"google.golang.org/api/firestore/v1"
+	"google.golang.org/api/option"
 )
 
 type App struct {
@@ -186,10 +190,14 @@ func (a *App) GetUsers(max int) AppResponse {
 	if a.firebaseClient == nil {
 		return AppResponse{Success: false, Error: "Not connected to any project"}
 	}
+
 	users, err := a.firebaseClient.GetUsers(a.ctx, max)
 	if err != nil {
 		return AppResponse{Success: false, Error: err.Error()}
 	}
+
+	// We need to return a simplified version or ensure the data is serializable
+	// Sometimes the ExportedUserRecord contains complex types that Wails/JSON might struggle with
 	return AppResponse{Success: true, Data: users}
 }
 
@@ -202,4 +210,40 @@ func (a *App) DeleteUser(uid string) AppResponse {
 		return AppResponse{Success: false, Error: err.Error()}
 	}
 	return AppResponse{Success: true}
+}
+
+func (a *App) ListDatabases(serviceAccountPath string) AppResponse {
+	ctx := context.Background()
+
+	svc, err := firestore.NewService(ctx, option.WithCredentialsFile(serviceAccountPath))
+	if err != nil {
+		return AppResponse{Success: false, Error: err.Error()}
+	}
+
+	infoResp := a.ParseServiceAccount(serviceAccountPath)
+	if !infoResp.Success {
+		return infoResp
+	}
+	projectID := infoResp.Data.(string)
+
+	parent := fmt.Sprintf("projects/%s", projectID)
+	resp, err := svc.Projects.Databases.List(parent).Do()
+	if err != nil {
+		log.Printf("List databases failed: %v", err)
+		return AppResponse{Success: true, Data: []string{"(default)"}}
+	}
+
+	var names []string
+	for _, db := range resp.Databases {
+		parts := strings.Split(db.Name, "/")
+		if len(parts) > 0 {
+			names = append(names, parts[len(parts)-1])
+		}
+	}
+
+	if len(names) == 0 {
+		names = append(names, "(default)")
+	}
+
+	return AppResponse{Success: true, Data: names}
 }

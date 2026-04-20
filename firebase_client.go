@@ -205,8 +205,18 @@ func (c *Client) DeleteDocument(ctx context.Context, path string) error {
 	return err
 }
 
-func (c *Client) GetUsers(ctx context.Context, max int) ([]*auth.ExportedUserRecord, error) {
-	var users []*auth.ExportedUserRecord
+type AuthUser struct {
+	UID         string `json:"uid"`
+	Email       string `json:"email"`
+	DisplayName string `json:"displayName"`
+	PhotoURL    string `json:"photoURL"`
+	Disabled    bool   `json:"disabled"`
+	Created     int64  `json:"created"`
+	LastSignIn  int64  `json:"lastSignIn"`
+}
+
+func (c *Client) GetUsers(ctx context.Context, max int) ([]AuthUser, error) {
+	users := make([]AuthUser, 0)
 	it := c.auth.Users(ctx, "")
 	for {
 		user, err := it.Next()
@@ -216,7 +226,17 @@ func (c *Client) GetUsers(ctx context.Context, max int) ([]*auth.ExportedUserRec
 		if err != nil {
 			return nil, err
 		}
-		users = append(users, user)
+
+		users = append(users, AuthUser{
+			UID:         user.UID,
+			Email:       user.Email,
+			DisplayName: user.DisplayName,
+			PhotoURL:    user.PhotoURL,
+			Disabled:    user.Disabled,
+			Created:     user.UserMetadata.CreationTimestamp,
+			LastSignIn:  user.UserMetadata.LastRefreshTimestamp,
+		})
+
 		if len(users) >= max {
 			break
 		}

@@ -9,6 +9,10 @@ export function ParseServiceAccount(arg1) {
     return window['go']['main']['App']['ParseServiceAccount'](arg1);
 }
 
+export function ListDatabases(arg1) {
+    return window['go']['main']['App']['ListDatabases'](arg1);
+}
+
 export function GetConfig() {
     return window['go']['main']['App']['GetConfig']();
 }

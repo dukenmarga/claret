@@ -1,5 +1,6 @@
 export function SelectServiceAccountFile():Promise<string>;
 export function ParseServiceAccount(arg1:string):Promise<any>;
+export function ListDatabases(arg1:string):Promise<any>;
 export function GetConfig():Promise<any>;
 export function AddProject(arg1:any):Promise<any>;
 export function RemoveProject(arg1:string):Promise<any>;
