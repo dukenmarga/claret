@@ -206,13 +206,15 @@ func (c *Client) DeleteDocument(ctx context.Context, path string) error {
 }
 
 type AuthUser struct {
-	UID         string `json:"uid"`
-	Email       string `json:"email"`
-	DisplayName string `json:"displayName"`
-	PhotoURL    string `json:"photoURL"`
-	Disabled    bool   `json:"disabled"`
-	Created     int64  `json:"created"`
-	LastSignIn  int64  `json:"lastSignIn"`
+	UID         string   `json:"uid"`
+	Email       string   `json:"email"`
+	PhoneNumber string   `json:"phoneNumber"`
+	DisplayName string   `json:"displayName"`
+	PhotoURL    string   `json:"photoURL"`
+	Disabled    bool     `json:"disabled"`
+	Created     int64    `json:"created"`
+	LastSignIn  int64    `json:"lastSignIn"`
+	Providers   []string `json:"providers"`
 }
 
 func (c *Client) UpdateUser(ctx context.Context, uid string, params *auth.UserToUpdate) error {
@@ -232,14 +234,21 @@ func (c *Client) GetUsers(ctx context.Context, max int) ([]AuthUser, error) {
 			return nil, err
 		}
 
+		providers := make([]string, 0)
+		for _, info := range user.ProviderUserInfo {
+			providers = append(providers, info.ProviderID)
+		}
+
 		users = append(users, AuthUser{
 			UID:         user.UID,
 			Email:       user.Email,
+			PhoneNumber: user.PhoneNumber,
 			DisplayName: user.DisplayName,
 			PhotoURL:    user.PhotoURL,
 			Disabled:    user.Disabled,
 			Created:     user.UserMetadata.CreationTimestamp,
 			LastSignIn:  user.UserMetadata.LastRefreshTimestamp,
+			Providers:   providers,
 		})
 
 		if len(users) >= max {
@@ -247,6 +256,104 @@ func (c *Client) GetUsers(ctx context.Context, max int) ([]AuthUser, error) {
 		}
 	}
 	return users, nil
+}
+
+func (c *Client) SearchUsers(ctx context.Context, query string) ([]AuthUser, error) {
+	if query == "" {
+		return c.GetUsers(ctx, 100)
+	}
+
+	foundUsers := make([]AuthUser, 0)
+
+	mapUser := func(user *auth.UserRecord) AuthUser {
+		providers := make([]string, 0)
+		for _, info := range user.ProviderUserInfo {
+			providers = append(providers, info.ProviderID)
+		}
+		return AuthUser{
+			UID:         user.UID,
+			Email:       user.Email,
+			PhoneNumber: user.PhoneNumber,
+			DisplayName: user.DisplayName,
+			PhotoURL:    user.PhotoURL,
+			Disabled:    user.Disabled,
+			Created:     user.UserMetadata.CreationTimestamp,
+			LastSignIn:  user.UserMetadata.LastRefreshTimestamp,
+			Providers:   providers,
+		}
+	}
+
+	// Helper for ExportedUserRecord
+	mapExportedUser := func(user *auth.ExportedUserRecord) AuthUser {
+		providers := make([]string, 0)
+		for _, info := range user.ProviderUserInfo {
+			providers = append(providers, info.ProviderID)
+		}
+		return AuthUser{
+			UID:         user.UID,
+			Email:       user.Email,
+			PhoneNumber: user.PhoneNumber,
+			DisplayName: user.DisplayName,
+			PhotoURL:    user.PhotoURL,
+			Disabled:    user.Disabled,
+			Created:     user.UserMetadata.CreationTimestamp,
+			LastSignIn:  user.UserMetadata.LastRefreshTimestamp,
+			Providers:   providers,
+		}
+	}
+
+	// 1. Try exact UID
+	user, err := c.auth.GetUser(ctx, query)
+	if err == nil {
+		foundUsers = append(foundUsers, mapUser(user))
+		return foundUsers, nil
+	}
+
+	// 2. Try exact Email
+	user, err = c.auth.GetUserByEmail(ctx, query)
+	if err == nil {
+		foundUsers = append(foundUsers, mapUser(user))
+		return foundUsers, nil
+	}
+
+	// 3. Try exact Phone
+	user, err = c.auth.GetUserByPhoneNumber(ctx, query)
+	if err == nil {
+		foundUsers = append(foundUsers, mapUser(user))
+		return foundUsers, nil
+	}
+
+	// 4. Partial search (fallback)
+	// CAP the scan to prevent hanging on large projects
+	it := c.auth.Users(ctx, "")
+	queryLower := strings.ToLower(query)
+	count := 0
+	for {
+		user, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		match := strings.Contains(strings.ToLower(user.Email), queryLower) ||
+			strings.Contains(strings.ToLower(user.DisplayName), queryLower) ||
+			strings.Contains(user.UID, query) ||
+			strings.Contains(user.PhoneNumber, query)
+
+		if match {
+			foundUsers = append(foundUsers, mapExportedUser(user))
+		}
+
+		count++
+		// Stop scanning after 100 users total to ensure instant response
+		if len(foundUsers) >= 100 || count >= 100 {
+			break
+		}
+	}
+
+	return foundUsers, nil
 }
 
 func (c *Client) DeleteUser(ctx context.Context, uid string) error {

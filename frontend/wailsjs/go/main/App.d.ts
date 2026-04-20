@@ -10,4 +10,6 @@ export function GetDocuments(arg1:string,arg2:any):Promise<any>;
 export function UpdateDocument(arg1:string,arg2:any):Promise<any>;
 export function DeleteDocuments(arg1:Array<string>):Promise<any>;
 export function GetUsers(arg1:number):Promise<any>;
+export function SearchUsers(arg1:string):Promise<any>;
 export function DeleteUser(arg1:string):Promise<any>;
+export function UpdateUser(arg1:string,arg2:any):Promise<any>;

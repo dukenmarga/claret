@@ -197,8 +197,19 @@ func (a *App) GetUsers(max int) AppResponse {
 		return AppResponse{Success: false, Error: err.Error()}
 	}
 
-	// We need to return a simplified version or ensure the data is serializable
-	// Sometimes the ExportedUserRecord contains complex types that Wails/JSON might struggle with
+	return AppResponse{Success: true, Data: users}
+}
+
+func (a *App) SearchUsers(query string) AppResponse {
+	if a.firebaseClient == nil {
+		return AppResponse{Success: false, Error: "Not connected to any project"}
+	}
+
+	users, err := a.firebaseClient.SearchUsers(a.ctx, query)
+	if err != nil {
+		return AppResponse{Success: false, Error: err.Error()}
+	}
+
 	return AppResponse{Success: true, Data: users}
 }
 

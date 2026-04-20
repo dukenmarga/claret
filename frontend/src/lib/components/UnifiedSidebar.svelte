@@ -58,13 +58,13 @@
                             {@const isDbActive = appState.currentProjectId === db.id && appState.activeTab === 'firestore'}
                             <div class="flex flex-col group/db">
                                 <div class="flex items-center gap-1 pr-2 rounded-lg transition-all {isDbActive ? 'bg-indigo-500/30 shadow-lg' : 'hover:bg-white/5'}">
-                                    <button 
-                                        onclick={() => { appState.selectProject(db.id, db.databaseId); appState.activeTab = 'firestore' }}
-                                        class="flex-1 flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs transition-all {isDbActive ? 'text-white font-black' : 'text-slate-400 hover:text-white'}"
-                                    >
-                                        <Database size={14} class={isDbActive ? 'text-white' : 'text-slate-500'} />
-                                        <span class="truncate text-left">Firestore <span class="{isDbActive ? 'text-white/60' : 'text-slate-600'} font-mono text-[10px] ml-1">[{db.databaseId || 'default'}]</span></span>
-                                    </button>
+                                <button 
+                                    onclick={() => { appState.selectProject(db.id, db.databaseId); appState.activeTab = 'firestore' }}
+                                    class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs transition-all {isDbActive ? 'text-white bg-indigo-500/40 font-black shadow-lg ring-1 ring-white/10' : 'text-slate-400 hover:text-white hover:bg-white/5'}"
+                                >
+                                    <Database size={14} class={isDbActive ? 'text-white' : 'text-slate-500'} />
+                                    <span class="truncate text-left">Firestore <span class="{isDbActive ? 'text-white font-black' : 'text-slate-600'} font-mono text-[10px] ml-1">[{db.databaseId || 'default'}]</span></span>
+                                </button>
                                     
                                     <button 
                                         onclick={(e) => { e.stopPropagation(); if(confirm('Detach this database?')) appState.removeProject(db.id) }}
@@ -80,7 +80,7 @@
                                         {#each appState.collections as coll}
                                             <button 
                                                 onclick={() => appState.selectCollection(coll)}
-                                                class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-all {appState.selectedPath === coll ? 'text-white bg-white/10 font-black shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'}"
+                                                class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-all {appState.selectedPath === coll ? 'text-white bg-white/20 font-black shadow-sm ring-1 ring-white/10' : 'text-slate-400 hover:text-white hover:bg-white/5'}"
                                             >
                                                 <Folder size={12} class={appState.selectedPath === coll ? 'text-white' : 'text-slate-600'} />
                                                 <span class="truncate text-xs">{coll}</span>
